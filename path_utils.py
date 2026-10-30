@@ -42,16 +42,26 @@ def is_valid_antigravity_dir(path):
     has_conv = os.path.isdir(os.path.join(path, "conversations"))
     return has_db or has_brain or has_conv
 
+TARGET_NAMES = ["antigravity", "antigravity-ide", "antigravity-cli"]
+
 def find_available_targets(override_path=None):
     if override_path:
         norm = os.path.normpath(os.path.expanduser(override_path))
         if is_valid_antigravity_dir(norm):
             name = os.path.basename(norm) or "custom"
             return {name: norm}
+        # Also accept a parent directory (e.g. ~/.gemini) that contains target dirs.
+        children = {}
+        for tname in TARGET_NAMES:
+            p = os.path.join(norm, tname)
+            if is_valid_antigravity_dir(p):
+                children[tname] = os.path.normpath(p)
+        if children:
+            return children
         raise FileNotFoundError(f"Specified directory invalid or not found: {override_path}")
 
     targets = {}
-    target_names = ["antigravity", "antigravity-ide", "antigravity-cli"]
+    target_names = TARGET_NAMES
     for base in get_candidate_bases():
         for tname in target_names:
             if tname not in targets:
